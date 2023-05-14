@@ -1,0 +1,21 @@
+spring:
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      authentication-database: admin
+      database: temp
+      username: root
+      password: root-password
+
+logging:
+  config: classpath:log4j2-spring.xml
+  charset:
+    console: UTF-8
+    file: UTF-8
+  level:
+    default: debug
+
+springdoc:
+  swagger-ui:
+    path: /docs

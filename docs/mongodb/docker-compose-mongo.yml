@@ -1,0 +1,97 @@
+version: '3'
+
+networks:
+  mongoReplica:
+    name: mongoReplica
+
+services:
+  mongodb-1:
+    image: mongo:5.0.16
+    container_name: mongodb-1
+    restart: always
+    ports:
+      - 27017:27017
+    networks:
+      - mongoReplica
+    environment:
+      LC_ALL: 'C.UTF-8'
+      TZ: 'Asia/Seoul'
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root-password
+      MONGO_INITDB_DATABASE: admin
+    volumes:
+      - ./mongodb-1:/data/db
+      - ./mongodb.key:/etc/mongodb.key
+      - ./01-common.js:/docker-entrypoint-initdb.d/01-common.js:ro
+    logging:
+      options:
+        max-size: '100k'
+    command: mongod --replSet rs0 --keyFile /etc/mongodb.key
+  mongodb-2:
+    image: mongo:5.0.16
+    container_name: mongodb-2
+    restart: always
+    ports:
+      - 27018:27017
+    networks:
+      - mongoReplica
+    environment:
+      LC_ALL: 'C.UTF-8'
+      TZ: 'Asia/Seoul'
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root-password
+      MONGO_INITDB_DATABASE: admin
+    volumes:
+      - ./mongodb-2:/data/db
+      - ./mongodb.key:/etc/mongodb.key
+    logging:
+      options:
+        max-size: '100k'
+    depends_on:
+      - mongodb-1
+    command: mongod --replSet rs0 --keyFile /etc/mongodb.key
+  mongodb-3:
+    image: mongo:5.0.16
+    container_name: mongodb-3
+    restart: always
+    ports:
+      - 27019:27017
+    networks:
+      - mongoReplica
+    environment:
+      LC_ALL: 'C.UTF-8'
+      TZ: 'Asia/Seoul'
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root-password
+      MONGO_INITDB_DATABASE: admin
+    volumes:
+      - ./mongodb-3:/data/db
+      - ./mongodb.key:/etc/mongodb.key
+    logging:
+      options:
+        max-size: '100k'
+    depends_on:
+      - mongodb-2
+    command: mongod --replSet rs0 --keyFile /etc/mongodb.key
+
+  mongo-express:
+    image: mongo-express:0.54.0
+    container_name: mongo-express
+    restart: always
+    ports:
+      - 38801:8081
+    networks:
+      - mongoReplica
+    environment:
+      LC_ALL: 'C.UTF-8'
+      TZ: 'Asia/Seoul'
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: root-password
+      ME_CONFIG_MONGODB_SERVER: mongodb-1,mongodb-2,mongodb-3
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb-1:27017,mongodb-2:27017,mongodb-3:27017/admin?replcaSet=rs0
+    depends_on:
+      - mongodb-1
+      - mongodb-2
+      - mongodb-3
